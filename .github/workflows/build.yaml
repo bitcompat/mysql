@@ -1,0 +1,36 @@
+name: build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_mysql_8_0:
+    uses: bitcompat/base/.github/workflows/build.yaml@main
+    with:
+      name: main
+      build-args: |
+        SERVER_VERSION=8.0.30
+      image_tag: |
+        latest
+        8.0.30-bullseye-r1 # renovate: datasource=github-tags depName=mysql/mysql-server
+        8.0.30-bullseye # renovate: datasource=github-tags depName=mysql/mysql-server
+        8.0.30 # renovate: datasource=github-tags depName=mysql/mysql-server
+        8.0
+        8
+    secrets: inherit
+
+  build_mysql_5_7:
+    uses: bitcompat/base/.github/workflows/build.yaml@main
+    with:
+      name: main
+      build-args: |
+        SERVER_VERSION=5.7.39
+      image_tag: | 
+        5.7.39-bullseye-r1
+        5.7.39-bullseye
+        5.7.39
+        5.7
+        5
+    secrets: inherit
