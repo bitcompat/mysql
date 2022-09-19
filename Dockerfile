@@ -96,6 +96,7 @@ RUN <<EOT bash
     mkdir -p /docker-entrypoint-initdb.d /bitnami/mysql/data
     echo "" > /.mysqlsh
     chown 1001 /.mysqlsh
+    chown -R 1001 /bitnami
 EOT
 
 EXPOSE 3306
