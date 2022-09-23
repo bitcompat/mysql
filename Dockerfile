@@ -7,7 +7,6 @@ FROM docker.io/bitnami/minideb:bullseye as builder
 ARG TARGETPLATFORM
 
 COPY prebuildfs /
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN install_packages curl ca-certificates tar build-essential cmake make g++ libssl-dev libldap2-dev libsasl2-dev  \
     libkrb5-dev pkg-config libsasl2-modules-gssapi-mit libncurses5-dev libudev-dev bison libaio-dev
@@ -18,10 +17,16 @@ ADD --link https://github.com/mysql/mysql-server/archive/refs/tags/mysql-${SERVE
 RUN <<EOT bash
     set -ex
     cd /bitnami/blacksmith-sandox
-    tar xvf mysql-${SERVER_VERSION}.tar.gz
+    tar xf mysql-${SERVER_VERSION}.tar.gz
 
     mv mysql-server-mysql-${SERVER_VERSION} mysql-${SERVER_VERSION}
     cd mysql-${SERVER_VERSION}
+
+    # Cleanup tests dir, we don't need them here, they're only slowing down builds.
+    rm -rf mysql-test
+    mkdir -p mysql-test/lib/My/SafeProcess
+    touch mysql-test/CMakeLists.txt
+    touch mysql-test/lib/My/SafeProcess/CMakeLists.txt
 
     cmake -DBUILD_CONFIG=mysql_release -DCMAKE_INSTALL_PREFIX=/opt/bitnami/mysql -DCMAKE_BUILD_TYPE=RelWithDebInfo \
      -DHANDLE_FATAL_SIGNALS=ON -DMYSQLX_GENERATE_DIR=/bitnami/blacksmith-sandox/mysql-${SERVER_VERSION}/plugin/x/generated \
