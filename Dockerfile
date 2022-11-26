@@ -1,15 +1,43 @@
 # syntax=docker/dockerfile:1.4
 
 ARG SERVER_VERSION
+ARG DOCKER_ARCH=$TARGETARCH
 
-FROM docker.io/bitnami/minideb:bullseye as builder
+FROM --platform=$BUILDARCH docker.io/bitnami/minideb:bullseye AS base-amd64
 
-ARG TARGETPLATFORM
+ENV DEBIAN_ARCH=amd64
+ENV BUILD_ARCH=x86_64
+ENV GCC_ARCH=x86-64
+ENV \
+    CC=x86_64-linux-gnu-gcc \
+    CXX=x86_64-linux-gnu-g++
+
+FROM --platform=$BUILDARCH docker.io/bitnami/minideb:bullseye AS base-arm64
+
+ENV DEBIAN_ARCH=arm64
+ENV BUILD_ARCH=aarch64
+ENV GCC_ARCH=aarch64
+ENV \
+    CC=aarch64-linux-gnu-gcc \
+    CXX=aarch64-linux-gnu-g++
+
+FROM --platform=$BUILDARCH base-$TARGETARCH AS builder
 
 COPY prebuildfs /
+ENV BUILD_TARGET=${BUILD_ARCH}-unknown-linux-gnu
 
-RUN install_packages curl ca-certificates tar build-essential cmake make g++ libssl-dev libldap2-dev libsasl2-dev  \
-    libkrb5-dev pkg-config libsasl2-modules-gssapi-mit libncurses5-dev libudev-dev bison libaio-dev
+#RUN apt-get update \
+#    && apt-get -y install llvm cmake git curl clang libcurl4-openssl-dev:${DEBIAN_ARCH} zip \
+#    binutils-${GCC_ARCH}-linux-gnu libc6-${DEBIAN_ARCH}-cross \
+#    libc6-dev-${DEBIAN_ARCH}-cross crossbuild-essential-${DEBIAN_ARCH} gcc-${GCC_ARCH}-linux-gnu \
+#    g++-${GCC_ARCH}-linux-gnu libgcc-10-dev-${DEBIAN_ARCH}-cross
+
+RUN dpkg --add-architecture ${DEBIAN_ARCH} \
+    && install_packages curl ca-certificates tar crossbuild-essential-${DEBIAN_ARCH} cmake make \
+    g++-${GCC_ARCH}-linux-gnu gcc-${GCC_ARCH}-linux-gnu binutils-${GCC_ARCH}-linux-gnu libc6-${DEBIAN_ARCH}-cross \
+    libgcc-10-dev-${DEBIAN_ARCH}-cross libstdc++6-${DEBIAN_ARCH}-cross libstdc++6:${DEBIAN_ARCH} cpp \
+    libssl-dev:${DEBIAN_ARCH} libldap2-dev:${DEBIAN_ARCH} libsasl2-dev:${DEBIAN_ARCH} libkrb5-dev:${DEBIAN_ARCH} pkg-config \
+    libsasl2-modules-gssapi-mit:${DEBIAN_ARCH} libncurses5-dev:${DEBIAN_ARCH} libudev-dev:${DEBIAN_ARCH} bison libaio-dev:${DEBIAN_ARCH}
 RUN mkdir -p /bitnami/blacksmith-sandox/
 
 ARG SERVER_VERSION
@@ -48,8 +76,8 @@ RUN <<EOT bash
     done
 EOT
 
-RUN find /opt/bitnami/ -name "*.so*" -type f | xargs strip --strip-all
-RUN find /opt/bitnami/ -executable -type f | xargs strip --strip-all || true
+RUN find /opt/bitnami/ -name "*.so*" -type f | xargs ${BUILD_ARCH}-linux-gnu-strip --strip-all
+RUN find /opt/bitnami/ -executable -type f | xargs ${BUILD_ARCH}-linux-gnu-strip --strip-all || true
 
 RUN rm -rf /opt/bitnami/mysql/bin/mysql_client_test
 RUN rm -rf /opt/bitnami/mysql/bin/mysql_keyring_encryption_test
