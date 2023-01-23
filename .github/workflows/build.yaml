@@ -12,12 +12,12 @@ jobs:
       name: main
       cache-scope: mysql-80
       build-args: |
-        SERVER_VERSION=8.0.31
+        SERVER_VERSION=8.0.32
       image_tag: |
         latest
-        8.0.31-bullseye-r1 # renovate: datasource=github-tags depName=mysql/mysql-server
-        8.0.31-bullseye # renovate: datasource=github-tags depName=mysql/mysql-server
-        8.0.31 # renovate: datasource=github-tags depName=mysql/mysql-server
+        8.0.32-bullseye-r1 # renovate: datasource=github-tags depName=mysql/mysql-server
+        8.0.32-bullseye # renovate: datasource=github-tags depName=mysql/mysql-server
+        8.0.32 # renovate: datasource=github-tags depName=mysql/mysql-server
         8.0
         8
     secrets: inherit
@@ -28,11 +28,11 @@ jobs:
       name: main
       cache-scope: mysql-57
       build-args: |
-        SERVER_VERSION=5.7.40
+        SERVER_VERSION=5.7.41
       image_tag: | 
-        5.7.40-bullseye-r1
-        5.7.40-bullseye
-        5.7.40
+        5.7.41-bullseye-r1
+        5.7.41-bullseye
+        5.7.41
         5.7
         5
     secrets: inherit
