@@ -15,9 +15,9 @@ jobs:
         SERVER_VERSION=8.0.32
       image_tag: |
         latest
-        8.0.32-bullseye-r1 # renovate: datasource=github-tags depName=mysql/mysql-server
-        8.0.32-bullseye # renovate: datasource=github-tags depName=mysql/mysql-server
-        8.0.32 # renovate: datasource=github-tags depName=mysql/mysql-server
+        8.1.0-bullseye-r1 # renovate: datasource=github-tags depName=mysql/mysql-server
+        8.1.0-bullseye # renovate: datasource=github-tags depName=mysql/mysql-server
+        8.1.0 # renovate: datasource=github-tags depName=mysql/mysql-server
         8.0
         8
     secrets: inherit
