@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.4
 
-ARG SERVER_VERSION
+ARG BUILD_VERSION
 ARG DOCKER_ARCH=$TARGETARCH
 
 FROM --platform=$BUILDARCH docker.io/bitnami/minideb:bullseye AS base-amd64
@@ -40,15 +40,15 @@ RUN dpkg --add-architecture ${DEBIAN_ARCH} \
     libsasl2-modules-gssapi-mit:${DEBIAN_ARCH} libncurses5-dev:${DEBIAN_ARCH} libudev-dev:${DEBIAN_ARCH} bison libaio-dev:${DEBIAN_ARCH}
 RUN mkdir -p /bitnami/blacksmith-sandox/
 
-ARG SERVER_VERSION
-ADD --link https://github.com/mysql/mysql-server/archive/refs/tags/mysql-${SERVER_VERSION}.tar.gz /bitnami/blacksmith-sandox/mysql-${SERVER_VERSION}.tar.gz
+ARG BUILD_VERSION
+ADD --link https://github.com/mysql/mysql-server/archive/refs/tags/mysql-${BUILD_VERSION}.tar.gz /bitnami/blacksmith-sandox/mysql-${BUILD_VERSION}.tar.gz
 RUN <<EOT bash
     set -ex
     cd /bitnami/blacksmith-sandox
-    tar xf mysql-${SERVER_VERSION}.tar.gz
+    tar xf mysql-${BUILD_VERSION}.tar.gz
 
-    mv mysql-server-mysql-${SERVER_VERSION} mysql-${SERVER_VERSION}
-    cd mysql-${SERVER_VERSION}
+    mv mysql-server-mysql-${BUILD_VERSION} mysql-${BUILD_VERSION}
+    cd mysql-${BUILD_VERSION}
 
     # Cleanup tests dir, we don't need them here, they're only slowing down builds.
     rm -rf mysql-test
@@ -57,7 +57,7 @@ RUN <<EOT bash
     touch mysql-test/lib/My/SafeProcess/CMakeLists.txt
 
     cmake -DBUILD_CONFIG=mysql_release -DCMAKE_INSTALL_PREFIX=/opt/bitnami/mysql -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-     -DHANDLE_FATAL_SIGNALS=ON -DMYSQLX_GENERATE_DIR=/bitnami/blacksmith-sandox/mysql-${SERVER_VERSION}/plugin/x/generated \
+     -DHANDLE_FATAL_SIGNALS=ON -DMYSQLX_GENERATE_DIR=/bitnami/blacksmith-sandox/mysql-${BUILD_VERSION}/plugin/x/generated \
      -DFORCE_INSOURCE_BUILD=1 -DMYSQL_DATADIR=/opt/bitnami/mysql/data -DMYSQL_ICU_DATADIR=/opt/bitnami/mysql/lib/private \
      -DMYSQL_KEYRINGDIR=/opt/bitnami/mysql/keyring \
      -DWITH_ARCHIVE_STORAGE_ENGINE=ON -DWITH_AUTHENTICATION_CLIENT_PLUGINS=ON -DWITH_AUTHENTICATION_FIDO=OFF \
@@ -91,8 +91,8 @@ RUN rm -rf /opt/bitnami/mysql/lib/libmysqlservices.a
 RUN rm -rf /opt/bitnami/mysql/mysql-test
 
 RUN mkdir -p /opt/bitnami/mysql/licenses
-RUN cp /bitnami/blacksmith-sandox/mysql-${SERVER_VERSION}/LICENSE /opt/bitnami/mysql/licenses/mysql-${SERVER_VERSION}.txt
-RUN echo "mysql-${SERVER_VERSION},GPL2,https://github.com/mysql/mysql-server/archive/refs/tags/mysql-${SERVER_VERSION}.tar.gz" > /opt/bitnami/mysql/licenses/gpl-source-links.txt
+RUN cp /bitnami/blacksmith-sandox/mysql-${BUILD_VERSION}/LICENSE /opt/bitnami/mysql/licenses/mysql-${BUILD_VERSION}.txt
+RUN echo "mysql-${BUILD_VERSION},GPL2,https://github.com/mysql/mysql-server/archive/refs/tags/mysql-${BUILD_VERSION}.tar.gz" > /opt/bitnami/mysql/licenses/gpl-source-links.txt
 
 FROM docker.io/bitnami/minideb:bullseye as stage-0
 
@@ -105,7 +105,7 @@ RUN /opt/bitnami/scripts/mysql/postunpack.sh
 
 FROM docker.io/bitnami/minideb:bullseye as stage-1
 
-ARG SERVER_VERSION
+ARG BUILD_VERSION
 ARG TARGETARCH
 ENV HOME="/" \
     OS_ARCH="${TARGETARCH}" \
@@ -115,9 +115,9 @@ ENV HOME="/" \
     BITNAMI_APP_NAME="mysql" \
     PATH="/opt/bitnami/common/bin:/opt/bitnami/mysql/bin:/opt/bitnami/mysql/sbin:$PATH"
 
-LABEL org.opencontainers.image.ref.name="${SERVER_VERSION}-debian-11-r1" \
+LABEL org.opencontainers.image.ref.name="${BUILD_VERSION}-debian-11-r1" \
       org.opencontainers.image.title="mysql" \
-      org.opencontainers.image.version="${SERVER_VERSION}"
+      org.opencontainers.image.version="${BUILD_VERSION}"
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 

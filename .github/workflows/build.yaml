@@ -6,20 +6,22 @@ on:
       - main
 
 jobs:
+  build_mysql_8_1:
+    uses: bitcompat/base/.github/workflows/build.yaml@main
+    with:
+      name: main
+      cache-scope: mysql-81
+      version: 8.1.0 # renovate: datasource=github-tags depName=mysql/mysql-server
+      latest: true
+    secrets: inherit
+
   build_mysql_8_0:
     uses: bitcompat/base/.github/workflows/build.yaml@main
     with:
       name: main
       cache-scope: mysql-80
-      build-args: |
-        SERVER_VERSION=8.0.32
-      image_tag: |
-        latest
-        8.0.32-bullseye-r1 # renovate: datasource=github-tags depName=mysql/mysql-server
-        8.0.32-bullseye # renovate: datasource=github-tags depName=mysql/mysql-server
-        8.0.32 # renovate: datasource=github-tags depName=mysql/mysql-server
-        8.0
-        8
+      version: 8.0.34 # renovate: datasource=github-tags depName=mysql/mysql-server
+      latest: true
     secrets: inherit
 
   build_mysql_5_7:
@@ -27,12 +29,5 @@ jobs:
     with:
       name: main
       cache-scope: mysql-57
-      build-args: |
-        SERVER_VERSION=5.7.41
-      image_tag: | 
-        5.7.41-bullseye-r1
-        5.7.41-bullseye
-        5.7.41
-        5.7
-        5
+      version: 5.7.43 # renovate: datasource=github-tags depName=mysql/mysql-server
     secrets: inherit
