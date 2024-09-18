@@ -97,7 +97,7 @@ RUN echo "mysql-${BUILD_VERSION},GPL2,https://github.com/mysql/mysql-server/arch
 FROM docker.io/bitnami/minideb:bullseye as stage-0
 
 COPY --link rootfs/ /
-COPY --link --from=ghcr.io/bitcompat/gosu:1.14.0-bullseye-r1 /opt/bitnami/ /opt/bitnami/
+COPY --link --from=ghcr.io/bitcompat/gosu:1.16.0-bullseye-r1 /opt/bitnami/ /opt/bitnami/
 COPY --link --from=ghcr.io/bitcompat/ini-file:1.4.3-bullseye-r1 /opt/bitnami/ /opt/bitnami/
 COPY --link --from=builder /opt/bitnami/ /opt/bitnami/
 
