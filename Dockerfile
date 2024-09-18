@@ -98,7 +98,7 @@ FROM docker.io/bitnami/minideb:bullseye as stage-0
 
 COPY --link rootfs/ /
 COPY --link --from=ghcr.io/bitcompat/gosu:1.14.0-bullseye-r1 /opt/bitnami/ /opt/bitnami/
-COPY --link --from=ghcr.io/bitcompat/ini-file:1.4.3-bullseye-r1 /opt/bitnami/ /opt/bitnami/
+COPY --link --from=ghcr.io/bitcompat/ini-file:1.4.5-bullseye-r1 /opt/bitnami/ /opt/bitnami/
 COPY --link --from=builder /opt/bitnami/ /opt/bitnami/
 
 RUN /opt/bitnami/scripts/mysql/postunpack.sh
