@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.4
+# syntax=docker/dockerfile:1.20
 
 ARG BUILD_VERSION
 ARG DOCKER_ARCH=$TARGETARCH
