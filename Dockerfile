@@ -1,43 +1,13 @@
-# syntax=docker/dockerfile:1.4
+# syntax=docker/dockerfile:1.20
 
 ARG BUILD_VERSION
-ARG DOCKER_ARCH=$TARGETARCH
-
-FROM --platform=$BUILDARCH docker.io/bitnami/minideb:bullseye AS base-amd64
-
-ENV DEBIAN_ARCH=amd64
-ENV BUILD_ARCH=x86_64
-ENV GCC_ARCH=x86-64
-ENV \
-    CC=x86_64-linux-gnu-gcc \
-    CXX=x86_64-linux-gnu-g++
-
-FROM --platform=$BUILDARCH docker.io/bitnami/minideb:bullseye AS base-arm64
-
-ENV DEBIAN_ARCH=arm64
-ENV BUILD_ARCH=aarch64
-ENV GCC_ARCH=aarch64
-ENV \
-    CC=aarch64-linux-gnu-gcc \
-    CXX=aarch64-linux-gnu-g++
-
-FROM --platform=$BUILDARCH base-$TARGETARCH AS builder
+FROM docker.io/bitnami/minideb:bookworm AS builder
 
 COPY prebuildfs /
-ENV BUILD_TARGET=${BUILD_ARCH}-unknown-linux-gnu
 
-#RUN apt-get update \
-#    && apt-get -y install llvm cmake git curl clang libcurl4-openssl-dev:${DEBIAN_ARCH} zip \
-#    binutils-${GCC_ARCH}-linux-gnu libc6-${DEBIAN_ARCH}-cross \
-#    libc6-dev-${DEBIAN_ARCH}-cross crossbuild-essential-${DEBIAN_ARCH} gcc-${GCC_ARCH}-linux-gnu \
-#    g++-${GCC_ARCH}-linux-gnu libgcc-10-dev-${DEBIAN_ARCH}-cross
-
-RUN dpkg --add-architecture ${DEBIAN_ARCH} \
-    && install_packages curl ca-certificates tar crossbuild-essential-${DEBIAN_ARCH} cmake make \
-    g++-${GCC_ARCH}-linux-gnu gcc-${GCC_ARCH}-linux-gnu binutils-${GCC_ARCH}-linux-gnu libc6-${DEBIAN_ARCH}-cross \
-    libgcc-10-dev-${DEBIAN_ARCH}-cross libstdc++6-${DEBIAN_ARCH}-cross libstdc++6:${DEBIAN_ARCH} cpp \
-    libssl-dev:${DEBIAN_ARCH} libldap2-dev:${DEBIAN_ARCH} libsasl2-dev:${DEBIAN_ARCH} libkrb5-dev:${DEBIAN_ARCH} pkg-config \
-    libsasl2-modules-gssapi-mit:${DEBIAN_ARCH} libncurses5-dev:${DEBIAN_ARCH} libudev-dev:${DEBIAN_ARCH} bison libaio-dev:${DEBIAN_ARCH}
+RUN install_packages curl ca-certificates tar build-essential cmake make \
+    g++ gcc binutils libgcc-12-dev libssl-dev libldap2-dev libsasl2-dev libkrb5-dev pkg-config \
+    libsasl2-modules-gssapi-mit libncurses5-dev libudev-dev bison libaio-dev comerr-dev libtirpc-dev
 RUN mkdir -p /bitnami/blacksmith-sandox/
 
 ARG BUILD_VERSION
@@ -61,8 +31,9 @@ RUN <<EOT bash
      -DFORCE_INSOURCE_BUILD=1 -DMYSQL_DATADIR=/opt/bitnami/mysql/data -DMYSQL_ICU_DATADIR=/opt/bitnami/mysql/lib/private \
      -DMYSQL_KEYRINGDIR=/opt/bitnami/mysql/keyring \
      -DWITH_ARCHIVE_STORAGE_ENGINE=ON -DWITH_AUTHENTICATION_CLIENT_PLUGINS=ON -DWITH_AUTHENTICATION_FIDO=OFF \
-     -DWITH_AUTHENTICATION_KERBEROS=OFF -DWITH_AUTHENTICATION_LDAP=1 -DWITH_BLACKHOLE_STORAGE_ENGINE=ON \
+     -DWITH_AUTHENTICATION_KERBEROS=ON -DWITH_AUTHENTICATION_LDAP=1 -DWITH_BLACKHOLE_STORAGE_ENGINE=ON \
      -DWITH_FEDERATED_STORAGE_ENGINE=ON -DWITH_MYSQLX=ON -DWITH_ROUTER=ON -DDOWNLOAD_BOOST=1 -DWITH_BOOST=/tmp/boost \
+     -DWITH_TIRPC=system -DWITH_KERBEROS=system \
      -DWITH_UNIT_TESTS=OFF -DINSTALL_STATIC_LIBRARIES=OFF
     make -j$(nproc)
     make install
@@ -76,8 +47,8 @@ RUN <<EOT bash
     done
 EOT
 
-RUN find /opt/bitnami/ -name "*.so*" -type f | xargs ${BUILD_ARCH}-linux-gnu-strip --strip-all
-RUN find /opt/bitnami/ -executable -type f | xargs ${BUILD_ARCH}-linux-gnu-strip --strip-all || true
+RUN find /opt/bitnami/ -name "*.so*" -type f | xargs strip --strip-all
+RUN find /opt/bitnami/ -executable -type f | xargs strip --strip-all || true
 
 RUN rm -rf /opt/bitnami/mysql/bin/mysql_client_test
 RUN rm -rf /opt/bitnami/mysql/bin/mysql_keyring_encryption_test
@@ -94,39 +65,40 @@ RUN mkdir -p /opt/bitnami/mysql/licenses
 RUN cp /bitnami/blacksmith-sandox/mysql-${BUILD_VERSION}/LICENSE /opt/bitnami/mysql/licenses/mysql-${BUILD_VERSION}.txt
 RUN echo "mysql-${BUILD_VERSION},GPL2,https://github.com/mysql/mysql-server/archive/refs/tags/mysql-${BUILD_VERSION}.tar.gz" > /opt/bitnami/mysql/licenses/gpl-source-links.txt
 
-FROM docker.io/bitnami/minideb:bullseye as stage-0
+FROM docker.io/bitnami/minideb:bookworm AS stage-0
 
 COPY --link rootfs/ /
-COPY --link --from=ghcr.io/bitcompat/gosu:1.14.0-bullseye-r1 /opt/bitnami/ /opt/bitnami/
-COPY --link --from=ghcr.io/bitcompat/ini-file:1.4.3-bullseye-r1 /opt/bitnami/ /opt/bitnami/
+COPY --link --from=ghcr.io/bitcompat/ini-file:1.4.9-bookworm-r1 /opt/bitnami/ /opt/bitnami/
 COPY --link --from=builder /opt/bitnami/ /opt/bitnami/
 
 RUN /opt/bitnami/scripts/mysql/postunpack.sh
 
-FROM docker.io/bitnami/minideb:bullseye as stage-1
+FROM docker.io/bitnami/minideb:bookworm AS stage-1
 
 ARG BUILD_VERSION
 ARG TARGETARCH
 ENV HOME="/" \
     OS_ARCH="${TARGETARCH}" \
-    OS_FLAVOUR="debian-11" \
+    OS_FLAVOUR="debian-12" \
     OS_NAME="linux" \
-    APP_VERSION="8.0.30" \
+    APP_VERSION="${BUILD_VERSION}" \
     BITNAMI_APP_NAME="mysql" \
     PATH="/opt/bitnami/common/bin:/opt/bitnami/mysql/bin:/opt/bitnami/mysql/sbin:$PATH"
 
-LABEL org.opencontainers.image.ref.name="${BUILD_VERSION}-debian-11-r1" \
+LABEL org.opencontainers.image.ref.name="${BUILD_VERSION}-debian-12" \
       org.opencontainers.image.title="mysql" \
       org.opencontainers.image.version="${BUILD_VERSION}"
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install required system packages and dependencies
+COPY --link rootfs/ /
 COPY --from=stage-0 /opt/bitnami/ /opt/bitnami/
 RUN <<EOT bash
     set -e
-    install_packages acl ca-certificates curl gzip procps psmisc tar libaio1
-    mkdir -p /docker-entrypoint-initdb.d /bitnami/mysql/data
+    install_packages ca-certificates gzip procps psmisc tar libaio1 gcc-11 libssl3 libsasl2-2 libgssapi-krb5-2 \
+        libcom-err2 libtirpc3 libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0
+    mkdir -p /docker-entrypoint-initdb.d /bitnami/mysql/data /opt/bitnami/mysql/conf.default/bitnami
     echo "" > /.mysqlsh
     chown 1001 /.mysqlsh
     chown -R 1001 /bitnami
