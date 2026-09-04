@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.20
+# syntax=docker/dockerfile:1.27
 
 ARG BUILD_VERSION
 FROM docker.io/bitnami/minideb:bookworm AS builder
