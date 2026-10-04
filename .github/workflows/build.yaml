@@ -10,6 +10,7 @@ jobs:
     uses: bitcompat/base/.github/workflows/build.yaml@main
     with:
       name: main
+      compatibility-service: mysql
       cache-scope: mysql-9
       version: 9.5.0 # renovate: datasource=github-tags depName=mysql/mysql-server
       latest: true
@@ -19,6 +20,7 @@ jobs:
     uses: bitcompat/base/.github/workflows/build.yaml@main
     with:
       name: main
+      compatibility-service: mysql
       cache-scope: mysql-84
       version: 8.4.7 # renovate: datasource=github-tags depName=mysql/mysql-server
     secrets: inherit
@@ -27,6 +29,7 @@ jobs:
     uses: bitcompat/base/.github/workflows/build.yaml@main
     with:
       name: main
+      compatibility-service: mysql
       cache-scope: mysql-80
       version: 8.0.43 # renovate: datasource=github-tags depName=mysql/mysql-server
     secrets: inherit
@@ -35,6 +38,7 @@ jobs:
     uses: bitcompat/base/.github/workflows/build.yaml@main
     with:
       name: main
+      compatibility-service: mysql
       cache-scope: mysql-57
       version: 5.7.44 # renovate: datasource=github-tags depName=mysql/mysql-server
     secrets: inherit
